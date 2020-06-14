@@ -3,7 +3,7 @@ const router = express.Router();
 const AuthorController = require('./../controller/AuthorController');
 const { ObjectId } = require('mongodb');
 
-router.get('/author', async function (req, res) {
+router.get('/create-author', async function (req, res) {
 
     const result = {
         status: true,
@@ -211,7 +211,7 @@ router.get('/author', async function (req, res) {
                     },
                     {
                         "award_name": "PQR",
-                        "year": 2000
+                        "year": 2004
                     }
                 ],
                 "sold_books": [
@@ -250,7 +250,14 @@ router.get('/author', async function (req, res) {
             }
         ]
         const data = await AuthorController.Authors.createAuthors(authors)
-        result.message = 'Authors data inserted successfully.'
+        if(data){
+            result.data= authors
+            result.message = 'Authors data inserted successfully.'
+
+        }else{
+            result.message = 'Some error ooccured  , Pleaas try later'
+
+        }
         res.send(result)
     } catch (error) {
         console.log(error)
@@ -272,8 +279,7 @@ router.get('/author/awards/:n', async function (req, res) {
         if (noOfAwards) {
             noOfAwards = parseInt(noOfAwards);
             const where = { noOfAwards: { $gte: noOfAwards } }
-            const data = await AuthorController.Authors.getAuthorsByNoOfAwards(where)
-            console.log(data)
+            const data = await AuthorController.Authors.getAllAuthorsData(where)
             // data.dataLength=  data.length
             result.data = data
             result.message = 'SUCCESS'
@@ -297,7 +303,7 @@ router.get('/author/year/:year', async function (req, res) {
         data: []
     }
     try {
-        const year = req.params.year || 0;
+        let year = req.params.year || 0;
         if (year) {
             year = parseInt(year);
             const where = { awards: { $elemMatch: { year: { $gte: year } } } }
@@ -325,7 +331,15 @@ router.get('/author/profit', async function (req, res) {
         data: []
     }
     try {
-        let where = {}
+        const getData= req.query
+        let author_id = getData.author_id
+        let where = {};
+        if(author_id){
+            if (ObjectId.isValid(author_id)) {
+                author_id = ObjectId(author_id)
+                where = { _id:author_id };
+            }
+        }
         let afterWhere = {}
         const data = await AuthorController.Authors.getAllAuthorsAggregateData(where, afterWhere)
         result.data = data
